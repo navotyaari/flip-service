@@ -6,6 +6,7 @@ import sys
 
 import temporalio.client
 
+from flip_service.config import QUERY_POLL_INTERVAL
 from flip_service.log import setup_logging
 from flip_service.workflow import Flip, Params
 
@@ -23,14 +24,30 @@ async def flip(to_flip: list[str]) -> list[str]:
         target_host="localhost:7233",
     )
 
-    flip_result = await client.execute_workflow(
+    handle = await client.start_workflow(
         Flip.run,
         Params(strings=to_flip),
         id=f"flip-{random.randint(0, 100000)}",
         task_queue="default",
     )
 
-    return flip_result.strings
+    async def poll_progress():
+        while True:
+            flipped_count = await handle.query(Flip.get_strings_flipped_count)
+            http_200_count = await handle.query(Flip.get_http_200_count)
+            print(f"Progress: {flipped_count} strings flipped, {http_200_count} HTTP 200s")
+            await asyncio.sleep(QUERY_POLL_INTERVAL)
+
+    poll_task = asyncio.create_task(poll_progress())
+    result = await handle.result()
+    poll_task.cancel()
+    try:
+        await poll_task
+    except asyncio.CancelledError:
+        pass
+
+    print(" ".join(result.strings))
+    return result.strings
 
 
 if __name__ == "__main__":
@@ -46,6 +63,4 @@ if __name__ == "__main__":
         logging.error(exc)
         sys.exit(1)
 
-    flipped = asyncio.run(flip(sys.argv[1:]))
-
-    print(" ".join(flipped))
+    asyncio.run(flip(sys.argv[1:]))
