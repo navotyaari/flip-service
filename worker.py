@@ -1,5 +1,5 @@
 import asyncio
-import warnings
+import logging
 
 import temporalio.client
 import temporalio.worker
@@ -22,9 +22,7 @@ async def main():
     # Start client
     client = await temporalio.client.Client.connect(TEMPORAL_HOST)
     if len(ACTIVITIES) == 0:
-        warnings.warn(
-            "No activities specified, worker will not be able to execute any non-workflow tasks"
-        )
+        logging.warning("No activities specified, worker will not be able to execute any non-workflow tasks")
     # Run a worker for the workflow
     async with temporalio.worker.Worker(
         client,
