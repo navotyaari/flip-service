@@ -6,7 +6,7 @@ import sys
 
 import temporalio.client
 
-from flip_service.config import QUERY_POLL_INTERVAL
+from flip_service.config import QUERY_POLL_INTERVAL, TEMPORAL_HOST
 from flip_service.log import setup_logging
 from flip_service.workflow import Flip, Params
 
@@ -21,7 +21,7 @@ def validate_inputs(strings: list[str]) -> None:
 
 async def flip(to_flip: list[str]) -> list[str]:
     client = await temporalio.client.Client.connect(
-        target_host="localhost:7233",
+        target_host=TEMPORAL_HOST,
     )
 
     handle = await client.start_workflow(

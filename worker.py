@@ -6,6 +6,7 @@ import temporalio.worker
 import temporalio.workflow
 
 from flip_service.activities import flip_batch
+from flip_service.config import TEMPORAL_HOST
 from flip_service.log import setup_logging
 from flip_service.workflow import Flip
 
@@ -19,7 +20,7 @@ async def main():
     setup_logging()
 
     # Start client
-    client = await temporalio.client.Client.connect("localhost:7233")
+    client = await temporalio.client.Client.connect(TEMPORAL_HOST)
     if len(ACTIVITIES) == 0:
         warnings.warn(
             "No activities specified, worker will not be able to execute any non-workflow tasks"
