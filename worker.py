@@ -1,11 +1,11 @@
 import asyncio
-import logging
 import warnings
 
 import temporalio.client
 import temporalio.worker
 import temporalio.workflow
 
+from flip_service.log import setup_logging
 from flip_service.workflow import Flip
 
 interrupt_event = asyncio.Event()
@@ -15,8 +15,7 @@ WORKFLOWS = [Flip]
 
 
 async def main():
-    # Uncomment the line below to see logging
-    logging.basicConfig(level=logging.INFO)
+    setup_logging()
 
     # Start client
     client = await temporalio.client.Client.connect("localhost:7233")
