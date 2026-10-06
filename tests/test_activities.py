@@ -11,7 +11,7 @@ from flip_service.activities import (
     RetryableFlipError,
     flip_batch,
 )
-from flip_service.config import FLIP_BATCH_RETRY_POLICY
+from flip_service.config_worker import FLIP_BATCH_RETRY_POLICY
 
 
 def make_response(mocker: MockerFixture, status_code: http.HTTPStatus, body: list[str] | None = None):

@@ -5,7 +5,7 @@ import httpx
 import temporalio.activity
 import temporalio.exceptions
 
-from flip_service.config import FLIP_SERVER_URL
+from flip_service.config_worker import FLIP_SERVER_URL
 
 MAX_BATCH_SIZE = 10
 

@@ -3,7 +3,7 @@ import dataclasses
 import temporalio.workflow
 
 from flip_service.activities import MAX_BATCH_SIZE, FlipBatch, flip_batch
-from flip_service.config import FLIP_BATCH_RETRY_POLICY, FLIP_BATCH_START_TO_CLOSE_TIMEOUT
+from flip_service.config_worker import FLIP_BATCH_RETRY_POLICY, FLIP_BATCH_START_TO_CLOSE_TIMEOUT
 
 
 @dataclasses.dataclass

@@ -6,7 +6,7 @@ import temporalio.worker
 import temporalio.workflow
 
 from flip_service.activities import flip_batch
-from flip_service.config import TEMPORAL_HOST
+from flip_service.config_client import TEMPORAL_HOST
 from flip_service.log import setup_logging
 from flip_service.workflow import Flip
 

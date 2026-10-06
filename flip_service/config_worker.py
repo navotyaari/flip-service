@@ -3,10 +3,7 @@ from datetime import timedelta
 
 from temporalio.common import RetryPolicy
 
-TEMPORAL_HOST = os.getenv("TEMPORAL_HOST", "localhost:7233")
 FLIP_SERVER_URL = os.getenv("FLIP_SERVER_URL", "http://127.0.0.1:8000")
-
-QUERY_POLL_INTERVAL = 2
 FLIP_SERVER_PROCESSING_TIME = timedelta(seconds=5)
 FLIP_BATCH_START_TO_CLOSE_TIMEOUT = FLIP_SERVER_PROCESSING_TIME * 6
 
