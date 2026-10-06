@@ -1,0 +1,72 @@
+import http
+
+import pytest
+from pytest_mock import MockerFixture
+
+from flip_service.activities import (
+    MAX_BATCH_SIZE,
+    FlipBatch,
+    FlipBatchResult,
+    NonRetryableFlipError,
+    RetryableFlipError,
+    flip_batch,
+)
+
+
+def make_response(mocker: MockerFixture, status_code: http.HTTPStatus, body: list[str] | None = None):
+    response = mocker.MagicMock(status_code=status_code)
+    if body is not None:
+        response.json.return_value = body
+    return response
+
+
+@pytest.fixture
+def mock_post(mocker: MockerFixture):
+    mock_client = mocker.AsyncMock()
+    mock_client.__aenter__.return_value = mock_client
+    mocker.patch("flip_service.activities.httpx.AsyncClient", return_value=mock_client)
+    return mock_client.post
+
+
+class TestHappyPath:
+    @pytest.mark.asyncio
+    async def test_returns_flipped_strings(self, mock_post, mocker):
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["olleh", "dlrow"])
+        result = await flip_batch(FlipBatch(strings=["hello", "world"]))
+        assert result == FlipBatchResult(strings=["olleh", "dlrow"])
+
+    @pytest.mark.asyncio
+    async def test_max_batch_size_accepted(self, mock_post, mocker):
+        strings = [chr(ord("a") + i) * 3 for i in range(MAX_BATCH_SIZE)]
+        flipped = [s[::-1] for s in strings]
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, flipped)
+        result = await flip_batch(FlipBatch(strings=strings))
+        assert result == FlipBatchResult(strings=flipped)
+
+
+class TestServerErrors:
+    @pytest.mark.asyncio
+    async def test_http_500_raises_retryable(self, mock_post, mocker):
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.INTERNAL_SERVER_ERROR)
+        with pytest.raises(RetryableFlipError):
+            await flip_batch(FlipBatch(strings=["hello"]))
+
+    @pytest.mark.asyncio
+    async def test_http_400_raises_non_retryable(self, mock_post, mocker):
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.BAD_REQUEST)
+        with pytest.raises(NonRetryableFlipError):
+            await flip_batch(FlipBatch(strings=["hello"]))
+
+
+class TestPartialFailure:
+    @pytest.mark.asyncio
+    async def test_dash_returned_intact(self, mock_post, mocker):
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["olleh", "-"])
+        result = await flip_batch(FlipBatch(strings=["hello", "world"]))
+        assert result == FlipBatchResult(strings=["olleh", "-"])
+
+    @pytest.mark.asyncio
+    async def test_all_dashes_returned_intact(self, mock_post, mocker):
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["-", "-"])
+        result = await flip_batch(FlipBatch(strings=["hello", "world"]))
+        assert result == FlipBatchResult(strings=["-", "-"])
