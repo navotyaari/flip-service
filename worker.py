@@ -5,12 +5,13 @@ import temporalio.client
 import temporalio.worker
 import temporalio.workflow
 
+from flip_service.activities import flip_batch
 from flip_service.log import setup_logging
 from flip_service.workflow import Flip
 
 interrupt_event = asyncio.Event()
 
-ACTIVITIES = []  # TODO add the activities here
+ACTIVITIES = [flip_batch]
 WORKFLOWS = [Flip]
 
 
