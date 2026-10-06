@@ -5,8 +5,9 @@ import httpx
 import temporalio.activity
 import temporalio.exceptions
 
+from flip_service.config import FLIP_SERVER_URL
+
 MAX_BATCH_SIZE = 10
-FLIP_SERVER_URL = "http://127.0.0.1:8000"
 
 
 @dataclasses.dataclass

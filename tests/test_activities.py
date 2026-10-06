@@ -4,7 +4,6 @@ import pytest
 from pytest_mock import MockerFixture
 
 from flip_service.activities import (
-    FLIP_BATCH_RETRY_POLICY,
     MAX_BATCH_SIZE,
     FlipBatch,
     FlipBatchResult,
@@ -12,6 +11,7 @@ from flip_service.activities import (
     RetryableFlipError,
     flip_batch,
 )
+from flip_service.config import FLIP_BATCH_RETRY_POLICY
 
 
 def make_response(mocker: MockerFixture, status_code: http.HTTPStatus, body: list[str] | None = None):
