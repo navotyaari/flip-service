@@ -1,10 +1,19 @@
 import asyncio
 import random
+import re
 import sys
 
 import temporalio.client
 
 from flip_service.workflow import Flip, Params
+
+
+def validate_inputs(strings: list[str]) -> None:
+    if not strings:
+        raise ValueError("at least one string is required")
+    invalid = [s for s in strings if not re.fullmatch(r"[a-z]+", s)]
+    if invalid:
+        raise ValueError(f"invalid strings (only lowercase a-z allowed): {', '.join(invalid)}")
 
 
 async def flip(to_flip: list[str]) -> list[str]:
@@ -25,6 +34,12 @@ async def flip(to_flip: list[str]) -> list[str]:
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python client.py <string> [<string> ...]")
+        sys.exit(1)
+
+    try:
+        validate_inputs(sys.argv[1:])
+    except ValueError as exc:
+        print(f"Error: {exc}")
         sys.exit(1)
 
     flipped = asyncio.run(flip(sys.argv[1:]))
