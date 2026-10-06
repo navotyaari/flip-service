@@ -4,6 +4,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from flip_service.activities import (
+    FLIP_BATCH_RETRY_POLICY,
     MAX_BATCH_SIZE,
     FlipBatch,
     FlipBatchResult,
@@ -26,6 +27,23 @@ def mock_post(mocker: MockerFixture):
     mock_client.__aenter__.return_value = mock_client
     mocker.patch("flip_service.activities.httpx.AsyncClient", return_value=mock_client)
     return mock_client.post
+
+
+class TestRetryPolicy:
+    def test_non_retryable_error_is_listed(self):
+        assert "NonRetryableFlipError" in FLIP_BATCH_RETRY_POLICY.non_retryable_error_types
+
+    def test_retryable_error_is_not_listed(self):
+        assert "RetryableFlipError" not in FLIP_BATCH_RETRY_POLICY.non_retryable_error_types
+
+    def test_max_attempts_is_not_unlimited(self):
+        assert FLIP_BATCH_RETRY_POLICY.maximum_attempts > 0
+
+    def test_initial_interval_is_set(self):
+        assert FLIP_BATCH_RETRY_POLICY.initial_interval is not None
+
+    def test_backoff_coefficient_is_greater_than_one(self):
+        assert FLIP_BATCH_RETRY_POLICY.backoff_coefficient > 1.0
 
 
 class TestHappyPath:
