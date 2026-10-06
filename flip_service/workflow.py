@@ -49,3 +49,11 @@ class Flip:
             pending = pending[MAX_BATCH_SIZE:] + still_pending
 
         return Result(strings=results)
+
+    @temporalio.workflow.query
+    def get_strings_flipped_count(self) -> int:
+        return self._strings_flipped_count
+
+    @temporalio.workflow.query
+    def get_http_200_count(self) -> int:
+        return self._http_200_count
