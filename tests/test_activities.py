@@ -4,13 +4,13 @@ import pytest
 from pytest_mock import MockerFixture
 
 from flip_service.activities import (
-    MAX_BATCH_SIZE,
     FlipBatch,
     FlipBatchResult,
     NonRetryableFlipError,
     RetryableFlipError,
     flip_batch,
 )
+from flip_service.config_worker import MAX_BATCH_SIZE, PARTIAL_FAILURE_SENTINEL
 from flip_service.config_worker import FLIP_BATCH_RETRY_POLICY
 
 
@@ -79,12 +79,12 @@ class TestServerErrors:
 class TestPartialFailure:
     @pytest.mark.asyncio
     async def test_dash_returned_intact(self, mock_post, mocker):
-        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["olleh", "-"])
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["olleh", PARTIAL_FAILURE_SENTINEL])
         result = await flip_batch(FlipBatch(strings=["hello", "world"]))
-        assert result == FlipBatchResult(strings=["olleh", "-"])
+        assert result == FlipBatchResult(strings=["olleh", PARTIAL_FAILURE_SENTINEL])
 
     @pytest.mark.asyncio
     async def test_all_dashes_returned_intact(self, mock_post, mocker):
-        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["-", "-"])
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, [PARTIAL_FAILURE_SENTINEL, PARTIAL_FAILURE_SENTINEL])
         result = await flip_batch(FlipBatch(strings=["hello", "world"]))
-        assert result == FlipBatchResult(strings=["-", "-"])
+        assert result == FlipBatchResult(strings=[PARTIAL_FAILURE_SENTINEL, PARTIAL_FAILURE_SENTINEL])

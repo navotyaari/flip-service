@@ -2,8 +2,8 @@ import dataclasses
 
 import temporalio.workflow
 
-from flip_service.activities import MAX_BATCH_SIZE, FlipBatch, flip_batch
-from flip_service.config_worker import FLIP_BATCH_RETRY_POLICY, FLIP_BATCH_START_TO_CLOSE_TIMEOUT
+from flip_service.activities import FlipBatch, flip_batch
+from flip_service.config_worker import FLIP_BATCH_RETRY_POLICY, FLIP_BATCH_START_TO_CLOSE_TIMEOUT, MAX_BATCH_SIZE, PARTIAL_FAILURE_SENTINEL
 
 
 @dataclasses.dataclass
@@ -40,7 +40,7 @@ class Flip:
 
             still_pending: list[tuple[int, str]] = []
             for (original_index, original_string), flipped in zip(batch, batch_result.strings):
-                if flipped != "-":
+                if flipped != PARTIAL_FAILURE_SENTINEL:
                     results[original_index] = flipped
                     self._strings_flipped_count += 1
                 else:

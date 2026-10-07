@@ -5,7 +5,8 @@ from temporalio import activity
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
-from flip_service.activities import MAX_BATCH_SIZE, FlipBatch, FlipBatchResult
+from flip_service.activities import FlipBatch, FlipBatchResult
+from flip_service.config_worker import MAX_BATCH_SIZE, PARTIAL_FAILURE_SENTINEL
 from flip_service.workflow import Flip, Params, Result
 
 
@@ -62,7 +63,7 @@ class TestPartialFailure:
     @pytest.mark.asyncio
     async def test_dash_strings_are_retried_until_resolved(self):
         mock = sequential_mock([
-            ["olleh", "-"],  # hello flips, world fails
+            ["olleh", PARTIAL_FAILURE_SENTINEL],  # hello flips, world fails
             ["dlrow"],       # world retried and flips
         ])
         async with await WorkflowEnvironment.start_time_skipping() as env:
@@ -137,7 +138,7 @@ class TestCounterDivergence:
     @pytest.mark.asyncio
     async def test_http_200_count_exceeds_flipped_count_after_partial_failure(self):
         mock = sequential_mock([
-            ["olleh", "-", "oof"],  # world fails: 3 strings counted, only 2 flipped
+            ["olleh", PARTIAL_FAILURE_SENTINEL, "oof"],  # world fails: 3 strings counted, only 2 flipped
             ["dlrow"],              # world retried: 1 more counted, 1 more flipped
         ])
         async with await WorkflowEnvironment.start_time_skipping() as env:
@@ -161,7 +162,7 @@ class TestOutputOrder:
     @pytest.mark.asyncio
     async def test_result_index_matches_input_index_after_retry(self):
         mock = sequential_mock([
-            ["olleh", "-", "oof"],  # world at index 1 fails
+            ["olleh", PARTIAL_FAILURE_SENTINEL, "oof"],  # world at index 1 fails
             ["dlrow"],              # world retried and flipped
         ])
         async with await WorkflowEnvironment.start_time_skipping() as env:
