@@ -1,82 +1,131 @@
-# Flip Server Exercise
+# flip-service
 
-## Temporal Docs
-A great part of this exercise is to learn some basic Temporal skills.
-You don't need to understand everything about Temporal, but you should be able to understand the below
-in order to complete the exercise.
-- The docs in the tutorials here should be enough for this exercise: https://learn.temporal.io/getting_started/
- - Note that there are multiple SDKs for temporal, we are working with Python.
- - The section about Temporal Cloud is not needed for this exercise.
-- There is some sample code in temporal SDK github repo: https://github.com/temporalio/samples-python
+A Temporal-based service that reverses strings via an external HTTP flip server.
 
-## Excercise Description
+---
 
-You are given black-box "flip" server - a remote, unreliable & quirky server that flips strings. See [server quirks](#server-quirks) for more details.
+## Prerequisites
 
-Your task is to utilize [temporal.io](https://temporal.io) to create a service that interacts with the server and reliably flips strings.
+| Requirement | Version | Notes |
+|---|---|---|
+| Python | 3.11 or 3.12 | `python --version` |
+| Poetry | any recent | `poetry --version` |
+| Temporal CLI | latest | see install below |
 
-### Requirements
-
-1. Accept arbitrary number of strings to flip
-1. Reliably flip all of them
-1. Add temporal `query` for number of strings flipped so far (measures progress)
-1. Add temporal `query` for number of `HTTP 200 OK` responses recieved so far from the unreliable server (you can think of it as "how much real work we caused the unreliable flip server to do")
-
-The service is to be used as follows, with the included `client.py` -
-```bash
-$ poetry run python client.py "hello" "world"
-> "olleh" "dlrow"
-```
-
-#### Using the queries
-
-You'll need to use the `queries` you implemented. For that you'll be required to add code to `client.py`.
-The new code will run an asynchronous loop that will query the workflow, and print the results (every `n` seconds).
-
-### The provided code
-You can add files as needed, but you are expected to use the provide template to fill in your solution.
-
-- The server is provided as a black-box, you can't change it (server.py)
-- The temporal worker (worker.py) is another python file you should run, note that it only knows 
-  about the Workflow defined in `tmprl.workflow` once you have added new `activity` you must add 
-  it to the `ACTIVITIES` the worker knows of.
-- The client (client.py) is provided as a way to interact with the server, you can change it as 
-  needed (for example to add the queries)
-- `workflow.py` is a template for the workflow implementation, it contains a naive string 
-  flipping logic that does not interact with the server, you should replace that logic with one 
-  that interacts with the server of course.
-- The provided code should execute fine. In addition to the python code, make sure to run the local 
-  temporal server first. 
-
-## Using the server
-
-### How to run the server
+**Temporal CLI** — install via Homebrew or the official script:
 
 ```bash
-poetry run python exercise/server.py
+brew install temporal
+# or
+curl -sSf https://temporal.download/cli.sh | sh
 ```
 
-### Sending a request
+Full install documentation: https://docs.temporal.io/cli
+
+All Python dependencies (including `httpx`, `temporalio`, `fastapi`, `uvicorn`) are managed by Poetry and installed in the setup step below.
+
+---
+
+## Setup
 
 ```bash
-curl "http://127.0.0.1:8000/flip" -H "Content-Type: application/json" -d '["hello", "world"]'
+poetry install
 ```
 
-### Server quirks
+---
 
-1. some requests may randomly fail (return code 500)
-1. requests take constant time to process
-1. the server accepts only lowercase a-z strings (else return code 400)
-1. the server might sometime fail to flip some strings (return code 200, in the response the 
-   failed strings will be `"-"`)
-1. the server accepts up to 10 strings at a time (else return code 400)
+## Running the project
 
-## Guidelines
+The service requires four processes running concurrently. Start them in this order, each in its own terminal.
 
-The code should be what you'd consider "Production Grade" python.
+**1. Temporal development server**
 
-Provide a README.md with instructions on how to run the code.
+```bash
+temporal server start-dev
+```
 
-You are expected to understand every part of the code you submit.
+**2. Flip server** (the external HTTP string-flipping service)
 
-### Good luck!
+```bash
+poetry run python server.py
+```
+
+**3. Worker** (executes workflow and activity tasks)
+
+```bash
+poetry run python worker.py
+```
+
+**4. Client** (submits a flip job and prints results)
+
+```bash
+poetry run python client.py <string> [<string> ...]
+```
+
+### Example
+
+```bash
+poetry run python client.py hello world
+```
+
+Expected output:
+
+```
+Progress: 0 strings flipped, 0 HTTP 200s
+Progress: 2 strings flipped, 2 HTTP 200s
+olleh dlrow
+```
+
+The progress lines are printed every 2 seconds while the workflow runs. The final line contains the flipped strings separated by spaces.
+
+The flip server introduces randomness: a 10% chance of an immediate HTTP 500 per request, and a 10% per-string chance of returning `-` instead of the flipped result. Both cases are retried automatically by the workflow. With retries, you may see the HTTP 200 counter exceed the strings-flipped counter before both settle at completion.
+
+---
+
+## Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `TEMPORAL_HOST` | `localhost:7233` | Address of the Temporal server, used by the worker and client |
+| `FLIP_SERVER_URL` | `http://127.0.0.1:8000` | Base URL of the flip HTTP server, used by the worker |
+
+---
+
+## Testing
+
+There are three test layers. Run them independently.
+
+**Unit tests** — mock all I/O; fast, no external processes required:
+
+```bash
+poetry run pytest tests/test_validation.py tests/test_activities.py tests/test_workflow.py tests/test_client.py
+```
+
+**Component tests** — real HTTP calls against a local in-process fixture server; no Temporal:
+
+```bash
+poetry run pytest tests/test_activities_component.py
+```
+
+**Integration tests** — full stack with a real embedded Temporal server and real activity code against the fixture server:
+
+```bash
+poetry run pytest tests/test_workflow_integration.py
+```
+
+> Integration tests start an embedded Temporal server and are slower than the other layers (~10–30 seconds total).
+
+---
+
+## Manual smoke test
+
+This exercises the full stack end-to-end using the real flip server, including its randomness and retry behaviour.
+
+1. Start all four processes as described in [Running the project](#running-the-project).
+2. Run the client with a few strings:
+
+```bash
+poetry run python client.py hello world foo bar
+```
+
+3. Observe the progress output. Because the server has a 10% per-request failure rate and a 10% per-string partial failure rate, some runs will show the HTTP 200 counter temporarily exceeding the strings-flipped counter before resolving. All strings will eventually be flipped and printed on the final line.
