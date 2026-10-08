@@ -1,9 +1,11 @@
+import os
 from datetime import timedelta
 
 from temporalio.common import RetryPolicy
 
-from flip_service.config_shared import TASK_QUEUE, TEMPORAL_HOST
-
+TEMPORAL_HOST = os.getenv("TEMPORAL_HOST", "localhost:7233")
+TASK_QUEUE = "default"
+QUERY_POLL_INTERVAL = 2
 FLIP_SERVER_PROCESSING_TIME = timedelta(seconds=5)
 FLIP_BATCH_START_TO_CLOSE_TIMEOUT = FLIP_SERVER_PROCESSING_TIME * 6
 

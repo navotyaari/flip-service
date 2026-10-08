@@ -6,7 +6,7 @@ import sys
 
 import temporalio.client
 
-from flip_service.config_client import QUERY_POLL_INTERVAL, TASK_QUEUE, TEMPORAL_HOST
+from flip_service.config import QUERY_POLL_INTERVAL, TASK_QUEUE, TEMPORAL_HOST
 from flip_service.log import setup_logging
 from flip_service.workflow import Flip, Params
 
