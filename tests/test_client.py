@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from client import QUERY_POLL_INTERVAL, flip
+from client import flip
 from flip_service.workflow import Flip, Result
 
 
