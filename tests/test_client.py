@@ -1,6 +1,7 @@
 import asyncio
 
 import pytest
+import temporalio.client
 
 from client import flip
 from flip_service.workflow import Flip, Result
@@ -23,6 +24,25 @@ def mock_workflow_handle(mocker):
 def mock_temporal_client(mocker, mock_workflow_handle):
     temporal_client = mocker.AsyncMock()
     temporal_client.start_workflow.return_value = mock_workflow_handle
+    mocker.patch("temporalio.client.Client.connect", return_value=temporal_client)
+    mocker.patch("client.QUERY_POLL_INTERVAL", 0)
+    return temporal_client
+
+
+@pytest.fixture
+def mock_failing_workflow_handle(mocker):
+    handle = mocker.AsyncMock()
+    handle.query.return_value = 0
+    handle.result.side_effect = temporalio.client.WorkflowFailureError(
+        cause=RuntimeError("workflow failed")
+    )
+    return handle
+
+
+@pytest.fixture
+def mock_temporal_client_failing(mocker, mock_failing_workflow_handle):
+    temporal_client = mocker.AsyncMock()
+    temporal_client.start_workflow.return_value = mock_failing_workflow_handle
     mocker.patch("temporalio.client.Client.connect", return_value=temporal_client)
     mocker.patch("client.QUERY_POLL_INTERVAL", 0)
     return temporal_client
@@ -52,6 +72,13 @@ class TestQueryLoop:
     async def test_execute_workflow_not_called(self, mock_temporal_client):
         await flip(["hello"])
         assert not mock_temporal_client.execute_workflow.called
+
+
+class TestWorkflowFailure:
+    @pytest.mark.asyncio
+    async def test_raises_on_workflow_failure(self, mock_temporal_client_failing):
+        with pytest.raises(temporalio.client.WorkflowFailureError):
+            await flip(["hello"])
 
 
 class TestOutput:
