@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from temporalio.common import RetryPolicy
 
+TEMPORAL_HOST = os.getenv("TEMPORAL_HOST", "localhost:7233")
 FLIP_SERVER_URL = os.getenv("FLIP_SERVER_URL", "http://127.0.0.1:8000")
 MAX_BATCH_SIZE = 10
 PARTIAL_FAILURE_SENTINEL = "-"
