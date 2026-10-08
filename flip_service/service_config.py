@@ -5,6 +5,7 @@ from datetime import timedelta
 from temporalio.common import RetryPolicy
 
 from batch_processor.service_config import ServiceConfig
+from flip_service.errors import NonRetryableFlipError
 
 
 _FLIP_SERVER_PROCESSING_TIME = timedelta(seconds=5)
@@ -21,6 +22,6 @@ SERVICE_CONFIG = ServiceConfig(
         maximum_attempts=10,
         initial_interval=timedelta(seconds=1),
         backoff_coefficient=2.0,
-        non_retryable_error_types=["NonRetryableFlipError"],
+        non_retryable_error_types=[NonRetryableFlipError.__name__],
     ),
 )

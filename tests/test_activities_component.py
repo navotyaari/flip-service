@@ -2,7 +2,8 @@ import dataclasses
 
 import pytest
 
-from flip_service.activities import FlipBatch, FlipBatchResult, RetryableFlipError, flip_batch
+from flip_service.activities import FlipBatch, FlipBatchResult, flip_batch
+from flip_service.errors import RetryableFlipError
 from flip_service.service_config import SERVICE_CONFIG
 from tests.fixtures.flip_server import controlled_flip_server
 

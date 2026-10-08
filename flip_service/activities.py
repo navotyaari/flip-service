@@ -3,8 +3,8 @@ import http
 
 import httpx
 import temporalio.activity
-import temporalio.exceptions
 
+from flip_service.errors import NonRetryableFlipError, RetryableFlipError
 from flip_service.service_config import SERVICE_CONFIG
 
 _http_client = httpx.AsyncClient()
@@ -18,15 +18,6 @@ class FlipBatch:
 @dataclasses.dataclass
 class FlipBatchResult:
     strings: list[str]
-
-
-class RetryableFlipError(Exception):
-    pass
-
-
-class NonRetryableFlipError(temporalio.exceptions.ApplicationError):
-    def __init__(self, message: str):
-        super().__init__(message, non_retryable=True)
 
 
 @temporalio.activity.defn

@@ -3,13 +3,8 @@ import http
 import pytest
 from pytest_mock import MockerFixture
 
-from flip_service.activities import (
-    FlipBatch,
-    FlipBatchResult,
-    NonRetryableFlipError,
-    RetryableFlipError,
-    flip_batch,
-)
+from flip_service.activities import FlipBatch, FlipBatchResult, flip_batch
+from flip_service.errors import NonRetryableFlipError, RetryableFlipError
 from flip_service.service_config import SERVICE_CONFIG
 
 
