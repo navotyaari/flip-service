@@ -94,6 +94,27 @@ class TestCounterAccuracy:
 
 
 @pytest.mark.integration
+class TestHttp500Retry:
+    @pytest.mark.asyncio
+    async def test_workflow_succeeds_after_activity_http_500(self, mocker):
+        async with controlled_flip_server(fail_first_n=1) as base_url:
+            mocker.patch(
+                "flip_service.activities.SERVICE_CONFIG",
+                dataclasses.replace(SERVICE_CONFIG, server_url=base_url),
+            )
+            async with await WorkflowEnvironment.start_local() as env:
+                async with Worker(env.client, task_queue="test", workflows=[Flip], activities=[flip_batch]):
+                    result = await env.client.execute_workflow(
+                        Flip.run,
+                        Params(strings=["hello"]),
+                        id=workflow_id(),
+                        task_queue="test",
+                    )
+
+        assert result == Result(strings=["olleh"])
+
+
+@pytest.mark.integration
 class TestOutputOrder:
     @pytest.mark.asyncio
     async def test_order_preserved_across_batches(self, flip_server):
