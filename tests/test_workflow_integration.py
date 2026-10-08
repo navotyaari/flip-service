@@ -1,3 +1,4 @@
+import dataclasses
 import uuid
 from collections import defaultdict
 
@@ -6,7 +7,7 @@ from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
 from flip_service.activities import flip_batch
-from flip_service.config_worker import MAX_BATCH_SIZE, PARTIAL_FAILURE_SENTINEL
+from flip_service.service_config import SERVICE_CONFIG
 from flip_service.workflow import Flip, Params, Result
 from tests.fixtures.flip_server import controlled_flip_server
 
@@ -39,11 +40,14 @@ class TestPartialFailureAndRecovery:
         def fail_first_attempt(s: str) -> str:
             attempt_counts[s] += 1
             if attempt_counts[s] == 1 and s == "world":
-                return PARTIAL_FAILURE_SENTINEL
+                return "-"
             return s[::-1]
 
         async with controlled_flip_server(flip_string=fail_first_attempt) as base_url:
-            mocker.patch("flip_service.activities.FLIP_SERVER_URL", base_url)
+            mocker.patch(
+                "flip_service.activities.SERVICE_CONFIG",
+                dataclasses.replace(SERVICE_CONFIG, server_url=base_url),
+            )
             async with await WorkflowEnvironment.start_local() as env:
                 async with Worker(env.client, task_queue="test", workflows=[Flip], activities=[flip_batch]):
                     result = await env.client.execute_workflow(
@@ -65,11 +69,14 @@ class TestCounterAccuracy:
         def fail_first_attempt(s: str) -> str:
             attempt_counts[s] += 1
             if attempt_counts[s] == 1 and s == "world":
-                return PARTIAL_FAILURE_SENTINEL
+                return "-"
             return s[::-1]
 
         async with controlled_flip_server(flip_string=fail_first_attempt) as base_url:
-            mocker.patch("flip_service.activities.FLIP_SERVER_URL", base_url)
+            mocker.patch(
+                "flip_service.activities.SERVICE_CONFIG",
+                dataclasses.replace(SERVICE_CONFIG, server_url=base_url),
+            )
             async with await WorkflowEnvironment.start_local() as env:
                 async with Worker(env.client, task_queue="test", workflows=[Flip], activities=[flip_batch]):
                     handle = await env.client.start_workflow(
@@ -90,7 +97,7 @@ class TestCounterAccuracy:
 class TestOutputOrder:
     @pytest.mark.asyncio
     async def test_order_preserved_across_batches(self, flip_server):
-        strings = [chr(ord("a") + i) * 3 for i in range(MAX_BATCH_SIZE + 1)]
+        strings = [chr(ord("a") + i) * 3 for i in range(SERVICE_CONFIG.max_batch_size + 1)]
 
         async with await WorkflowEnvironment.start_local() as env:
             async with Worker(env.client, task_queue="test", workflows=[Flip], activities=[flip_batch]):

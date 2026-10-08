@@ -1,7 +1,10 @@
+import dataclasses
+
 import httpx
 import pytest_asyncio
 
 import flip_service.activities as _activities_module
+from flip_service.service_config import SERVICE_CONFIG
 from tests.fixtures.flip_server import controlled_flip_server
 
 
@@ -16,5 +19,8 @@ async def reset_http_client(monkeypatch):
 @pytest_asyncio.fixture
 async def flip_server(mocker):
     async with controlled_flip_server() as base_url:
-        mocker.patch("flip_service.activities.FLIP_SERVER_URL", base_url)
+        mocker.patch(
+            "flip_service.activities.SERVICE_CONFIG",
+            dataclasses.replace(SERVICE_CONFIG, server_url=base_url),
+        )
         yield base_url

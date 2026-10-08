@@ -5,7 +5,7 @@ import httpx
 import temporalio.activity
 import temporalio.exceptions
 
-from flip_service.config_worker import FLIP_SERVER_URL, MAX_BATCH_SIZE, PARTIAL_FAILURE_SENTINEL
+from flip_service.service_config import SERVICE_CONFIG
 
 _http_client = httpx.AsyncClient()
 
@@ -31,11 +31,14 @@ class NonRetryableFlipError(temporalio.exceptions.ApplicationError):
 
 @temporalio.activity.defn
 async def flip_batch(batch: FlipBatch) -> FlipBatchResult:
-    response = await _http_client.post(f"{FLIP_SERVER_URL}/flip", json=batch.strings)
+    response = await _http_client.post(
+        f"{SERVICE_CONFIG.server_url}{SERVICE_CONFIG.endpoint}",
+        json=batch.strings,
+    )
 
-    if response.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR:
+    if response.status_code in SERVICE_CONFIG.retryable_status_codes:
         raise RetryableFlipError(response.text)
-    if response.status_code == http.HTTPStatus.BAD_REQUEST:
+    if response.status_code in SERVICE_CONFIG.non_retryable_status_codes:
         raise NonRetryableFlipError(response.text)
     if response.status_code != http.HTTPStatus.OK:
         raise RetryableFlipError(f"unexpected status {response.status_code.value}: {response.text}")

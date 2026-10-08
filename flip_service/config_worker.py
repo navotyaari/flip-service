@@ -1,13 +1,9 @@
-import os
 from datetime import timedelta
 
 from temporalio.common import RetryPolicy
 
 from flip_service.config_shared import TASK_QUEUE, TEMPORAL_HOST
 
-FLIP_SERVER_URL = os.getenv("FLIP_SERVER_URL", "http://127.0.0.1:8000")
-MAX_BATCH_SIZE = 10
-PARTIAL_FAILURE_SENTINEL = "-"
 FLIP_SERVER_PROCESSING_TIME = timedelta(seconds=5)
 FLIP_BATCH_START_TO_CLOSE_TIMEOUT = FLIP_SERVER_PROCESSING_TIME * 6
 

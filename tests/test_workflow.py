@@ -6,7 +6,7 @@ from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
 
 from flip_service.activities import FlipBatch, FlipBatchResult
-from flip_service.config_worker import MAX_BATCH_SIZE, PARTIAL_FAILURE_SENTINEL
+from flip_service.service_config import SERVICE_CONFIG
 from flip_service.workflow import Flip, Params, Result
 
 
@@ -63,7 +63,7 @@ class TestPartialFailure:
     @pytest.mark.asyncio
     async def test_dash_strings_are_retried_until_resolved(self):
         mock = sequential_mock([
-            ["olleh", PARTIAL_FAILURE_SENTINEL],  # hello flips, world fails
+            ["olleh", "-"],  # hello flips, world fails
             ["dlrow"],       # world retried and flips
         ])
         async with await WorkflowEnvironment.start_time_skipping() as env:
@@ -83,7 +83,7 @@ class TestBatching:
     @pytest.mark.asyncio
     async def test_input_exceeding_batch_size_splits_into_multiple_calls(self):
         mock, call_batches = counting_mock()
-        strings = [chr(ord("a") + i) * 3 for i in range(MAX_BATCH_SIZE + 1)]
+        strings = [chr(ord("a") + i) * 3 for i in range(SERVICE_CONFIG.max_batch_size + 1)]
 
         async with await WorkflowEnvironment.start_time_skipping() as env:
             async with Worker(
@@ -97,7 +97,7 @@ class TestBatching:
                 )
 
         assert len(call_batches) >= 2
-        assert all(len(batch) <= MAX_BATCH_SIZE for batch in call_batches)
+        assert all(len(batch) <= SERVICE_CONFIG.max_batch_size for batch in call_batches)
 
 
 class TestQueries:
@@ -139,8 +139,8 @@ class TestCounterDivergence:
     async def test_http_200_count_exceeds_flipped_count_after_partial_failure(self):
         # world fails twice: 3 calls total, 2 strings flipped → http_200_count (3) > strings_flipped_count (2)
         mock = sequential_mock([
-            ["olleh", PARTIAL_FAILURE_SENTINEL],  # call 1: hello flips, world fails
-            [PARTIAL_FAILURE_SENTINEL],            # call 2: world fails again
+            ["olleh", "-"],  # call 1: hello flips, world fails
+            ["-"],            # call 2: world fails again
             ["dlrow"],                             # call 3: world finally flips
         ])
         async with await WorkflowEnvironment.start_time_skipping() as env:
@@ -164,7 +164,7 @@ class TestOutputOrder:
     @pytest.mark.asyncio
     async def test_result_index_matches_input_index_after_retry(self):
         mock = sequential_mock([
-            ["olleh", PARTIAL_FAILURE_SENTINEL, "oof"],  # world at index 1 fails
+            ["olleh", "-", "oof"],  # world at index 1 fails
             ["dlrow"],              # world retried and flipped
         ])
         async with await WorkflowEnvironment.start_time_skipping() as env:

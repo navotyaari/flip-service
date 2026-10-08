@@ -10,8 +10,8 @@ from flip_service.activities import (
     RetryableFlipError,
     flip_batch,
 )
-from flip_service.config_worker import MAX_BATCH_SIZE, PARTIAL_FAILURE_SENTINEL
 from flip_service.config_worker import FLIP_BATCH_RETRY_POLICY
+from flip_service.service_config import SERVICE_CONFIG
 
 
 def make_response(mocker: MockerFixture, status_code: http.HTTPStatus, body: list[str] | None = None):
@@ -52,7 +52,7 @@ class TestHappyPath:
 
     @pytest.mark.asyncio
     async def test_max_batch_size_accepted(self, mock_post, mocker):
-        strings = [chr(ord("a") + i) * 3 for i in range(MAX_BATCH_SIZE)]
+        strings = [chr(ord("a") + i) * 3 for i in range(SERVICE_CONFIG.max_batch_size)]
         flipped = [s[::-1] for s in strings]
         mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, flipped)
         result = await flip_batch(FlipBatch(strings=strings))
@@ -82,12 +82,12 @@ class TestServerErrors:
 class TestPartialFailure:
     @pytest.mark.asyncio
     async def test_dash_returned_intact(self, mock_post, mocker):
-        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["olleh", PARTIAL_FAILURE_SENTINEL])
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["olleh", "-"])
         result = await flip_batch(FlipBatch(strings=["hello", "world"]))
-        assert result == FlipBatchResult(strings=["olleh", PARTIAL_FAILURE_SENTINEL])
+        assert result == FlipBatchResult(strings=["olleh", "-"])
 
     @pytest.mark.asyncio
     async def test_all_dashes_returned_intact(self, mock_post, mocker):
-        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, [PARTIAL_FAILURE_SENTINEL, PARTIAL_FAILURE_SENTINEL])
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.OK, ["-", "-"])
         result = await flip_batch(FlipBatch(strings=["hello", "world"]))
-        assert result == FlipBatchResult(strings=[PARTIAL_FAILURE_SENTINEL, PARTIAL_FAILURE_SENTINEL])
+        assert result == FlipBatchResult(strings=["-", "-"])
