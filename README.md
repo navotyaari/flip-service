@@ -117,6 +117,32 @@ poetry run pytest tests/test_workflow_integration.py
 
 ---
 
+## Extending to a New Service
+
+This infrastructure supports services that accept a batch of strings, return a batch of strings of the same length, and signal partial failures with a specific response value. Services with different payload shapes require their own implementation.
+
+To add a new service, create `<your_service>/service_config.py` with a `ServiceConfig` instance:
+
+```python
+SERVICE_CONFIG = ServiceConfig(
+    server_url=os.getenv("YOUR_SERVER_URL", "http://127.0.0.1:8001"),
+    endpoint="/your-endpoint",
+    is_partial_failure=lambda r: r in {"error", "failed"},
+    retryable_status_codes=frozenset({500, 503}),
+    non_retryable_status_codes=frozenset({400, 401}),
+    max_batch_size=5,
+)
+```
+
+Then in `worker.py`, replace the `SERVICE_CONFIG` import with your service's instance. No other changes are needed — the activity and workflow are fully generic.
+
+**Known limitations and expansion paths:**
+
+- For very large inputs (thousands of strings), use the external storage pattern: store strings in S3/Redis, pass a reference key as workflow input, and fetch inside the first activity. This removes Temporal's ~4 MB payload size constraint.
+- For workflows with many retry rounds (high partial failure rate over large inputs), use `continue_as_new` to reset Temporal's event history while preserving pending strings and counter values.
+
+---
+
 ## Manual smoke test
 
 This exercises the full stack end-to-end using the real flip server, including its randomness and retry behaviour.
