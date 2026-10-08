@@ -72,6 +72,12 @@ class TestServerErrors:
         with pytest.raises(NonRetryableFlipError):
             await flip_batch(FlipBatch(strings=["hello"]))
 
+    @pytest.mark.asyncio
+    async def test_unexpected_status_raises_retryable(self, mock_post, mocker):
+        mock_post.return_value = make_response(mocker, http.HTTPStatus.SERVICE_UNAVAILABLE)
+        with pytest.raises(RetryableFlipError):
+            await flip_batch(FlipBatch(strings=["hello"]))
+
 
 class TestPartialFailure:
     @pytest.mark.asyncio

@@ -37,5 +37,7 @@ async def flip_batch(batch: FlipBatch) -> FlipBatchResult:
         raise RetryableFlipError(response.text)
     if response.status_code == http.HTTPStatus.BAD_REQUEST:
         raise NonRetryableFlipError(response.text)
+    if response.status_code != http.HTTPStatus.OK:
+        raise RetryableFlipError(f"unexpected status {response.status_code.value}: {response.text}")
 
     return FlipBatchResult(strings=response.json())
