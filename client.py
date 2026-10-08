@@ -44,12 +44,14 @@ async def flip(to_flip: list[str]) -> list[str]:
             await asyncio.sleep(QUERY_POLL_INTERVAL)
 
     poll_task = asyncio.create_task(poll_progress())
-    result = await handle.result()
-    poll_task.cancel()
     try:
-        await poll_task
-    except asyncio.CancelledError:
-        pass
+        result = await handle.result()
+    finally:
+        poll_task.cancel()
+        try:
+            await poll_task
+        except asyncio.CancelledError:
+            pass
 
     print(" ".join(result.strings))
     return result.strings
