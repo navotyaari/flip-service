@@ -3,7 +3,9 @@ from typing import cast
 
 import temporalio.workflow
 
-from flip_service.activities import FlipBatch, flip_batch
+with temporalio.workflow.unsafe.imports_passed_through():
+    from flip_service.activities import FlipBatch, flip_batch
+
 from flip_service.config_worker import FLIP_BATCH_RETRY_POLICY, FLIP_BATCH_START_TO_CLOSE_TIMEOUT, MAX_BATCH_SIZE, PARTIAL_FAILURE_SENTINEL
 
 
@@ -17,7 +19,7 @@ class Result:
     strings: list[str]
 
 
-@temporalio.workflow.defn(name="Flip", sandboxed=False)
+@temporalio.workflow.defn(name="Flip")
 class Flip:
     def __init__(self) -> None:
         self._strings_flipped_count: int = 0
