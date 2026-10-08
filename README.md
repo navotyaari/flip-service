@@ -117,29 +117,50 @@ poetry run pytest tests/test_workflow_integration.py
 
 ---
 
-## Extending to a New Service
+## Adding a new service
 
-This infrastructure supports services that accept a batch of strings, return a batch of strings of the same length, and signal partial failures with a specific response value. Services with different payload shapes require their own implementation.
+`batch_processor/` is a reusable layer that handles Temporal orchestration, retries, partial failure recovery, and progress queries. It supports services that accept a batch of strings, return a batch of strings of the same length, and signal partial failures with a specific response value. Services with different payload shapes require their own implementation.
 
-To add a new service, create `<your_service>/service_config.py` with a `ServiceConfig` instance:
+### Steps
+
+**1. Create `<your_service>/service_config.py`**
+
+Define a `SERVICE_CONFIG` instance with your service's specifics:
 
 ```python
+from flip_service.service_config import ServiceConfig
+from temporalio.common import RetryPolicy
+from datetime import timedelta
+import http, os
+
 SERVICE_CONFIG = ServiceConfig(
     server_url=os.getenv("YOUR_SERVER_URL", "http://127.0.0.1:8001"),
     endpoint="/your-endpoint",
     is_partial_failure=lambda r: r in {"error", "failed"},
-    retryable_status_codes=frozenset({500, 503}),
-    non_retryable_status_codes=frozenset({400, 401}),
+    retryable_status_codes=frozenset({http.HTTPStatus.INTERNAL_SERVER_ERROR}),
+    non_retryable_status_codes=frozenset({http.HTTPStatus.BAD_REQUEST}),
     max_batch_size=5,
+    start_to_close_timeout=timedelta(seconds=30),
+    retry_policy=RetryPolicy(maximum_attempts=10, ...),
 )
 ```
 
-Then in `worker.py`, replace the `SERVICE_CONFIG` import with your service's instance. No other changes are needed — the activity and workflow are fully generic.
+**2. Copy and update `activities.py` and `workflow.py`**
 
-**Known limitations and expansion paths:**
+Copy `flip_service/activities.py` and `flip_service/workflow.py` to your service directory. The only required changes are:
+- Update the `SERVICE_CONFIG` import to point to your `service_config.py`
+- Rename the `Flip` class and its workflow name in `workflow.py` to match your service
 
-- For very large inputs (thousands of strings), use the external storage pattern: store strings in S3/Redis, pass a reference key as workflow input, and fetch inside the first activity. This removes Temporal's ~4 MB payload size constraint.
-- For workflows with many retry rounds (high partial failure rate over large inputs), use `continue_as_new` to reset Temporal's event history while preserving pending strings and counter values.
+No other logic changes are needed — all service-specific behaviour is in `SERVICE_CONFIG`.
+
+**3. Register in `worker.py`**
+
+Import your activity and workflow and add them to `ACTIVITIES` and `WORKFLOWS`.
+
+### Known limitations
+
+- **Large payloads** (thousands of strings): use the external storage pattern — store strings in S3 or Redis, pass a reference key as workflow input, fetch inside the first activity. This removes Temporal's ~4 MB payload size constraint.
+- **Long retry chains** (high partial failure rate over large inputs): use `continue_as_new` to reset Temporal's event history while preserving the pending strings and counter state.
 
 ---
 
