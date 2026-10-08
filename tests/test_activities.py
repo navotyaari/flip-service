@@ -10,7 +10,6 @@ from flip_service.activities import (
     RetryableFlipError,
     flip_batch,
 )
-from flip_service.config import FLIP_BATCH_RETRY_POLICY
 from flip_service.service_config import SERVICE_CONFIG
 
 
@@ -28,19 +27,19 @@ def mock_post(mocker: MockerFixture):
 
 class TestRetryPolicy:
     def test_non_retryable_error_is_listed(self):
-        assert "NonRetryableFlipError" in FLIP_BATCH_RETRY_POLICY.non_retryable_error_types
+        assert "NonRetryableFlipError" in SERVICE_CONFIG.retry_policy.non_retryable_error_types
 
     def test_retryable_error_is_not_listed(self):
-        assert "RetryableFlipError" not in FLIP_BATCH_RETRY_POLICY.non_retryable_error_types
+        assert "RetryableFlipError" not in SERVICE_CONFIG.retry_policy.non_retryable_error_types
 
     def test_max_attempts_is_not_unlimited(self):
-        assert FLIP_BATCH_RETRY_POLICY.maximum_attempts > 0
+        assert SERVICE_CONFIG.retry_policy.maximum_attempts > 0
 
     def test_initial_interval_is_set(self):
-        assert FLIP_BATCH_RETRY_POLICY.initial_interval is not None
+        assert SERVICE_CONFIG.retry_policy.initial_interval is not None
 
     def test_backoff_coefficient_is_greater_than_one(self):
-        assert FLIP_BATCH_RETRY_POLICY.backoff_coefficient > 1.0
+        assert SERVICE_CONFIG.retry_policy.backoff_coefficient > 1.0
 
 
 class TestHappyPath:
