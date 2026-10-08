@@ -36,7 +36,7 @@ class Flip:
                 retry_policy=FLIP_BATCH_RETRY_POLICY,
             )
 
-            self._http_200_count += len(batch_result.strings)
+            self._http_200_count += 1
 
             still_pending: list[tuple[int, str]] = []
             for (original_index, original_string), flipped in zip(batch, batch_result.strings):

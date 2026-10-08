@@ -16,3 +16,6 @@ build/
 
 # Private notes
 .notes/
+
+# Claude Code local settings
+.claude/

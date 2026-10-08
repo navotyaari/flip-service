@@ -83,7 +83,7 @@ class TestCounterAccuracy:
                     http_200_count = await handle.query(Flip.get_http_200_count)
 
         assert strings_flipped == 3
-        assert http_200_count == 4  # batch 1: 3 strings, retry batch: 1 string
+        assert http_200_count == 2  # round 1: 1 call (hello+world+foo), round 2: 1 call (world retry)
 
 
 @pytest.mark.integration

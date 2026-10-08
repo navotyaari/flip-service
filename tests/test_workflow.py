@@ -131,15 +131,17 @@ class TestQueries:
                 )
                 await handle.result()
                 count = await handle.query(Flip.get_http_200_count)
-        assert count == 3
+        assert count == 1
 
 
 class TestCounterDivergence:
     @pytest.mark.asyncio
     async def test_http_200_count_exceeds_flipped_count_after_partial_failure(self):
+        # world fails twice: 3 calls total, 2 strings flipped → http_200_count (3) > strings_flipped_count (2)
         mock = sequential_mock([
-            ["olleh", PARTIAL_FAILURE_SENTINEL, "oof"],  # world fails: 3 strings counted, only 2 flipped
-            ["dlrow"],              # world retried: 1 more counted, 1 more flipped
+            ["olleh", PARTIAL_FAILURE_SENTINEL],  # call 1: hello flips, world fails
+            [PARTIAL_FAILURE_SENTINEL],            # call 2: world fails again
+            ["dlrow"],                             # call 3: world finally flips
         ])
         async with await WorkflowEnvironment.start_time_skipping() as env:
             async with Worker(
@@ -147,7 +149,7 @@ class TestCounterDivergence:
             ):
                 handle = await env.client.start_workflow(
                     Flip.run,
-                    Params(strings=["hello", "world", "foo"]),
+                    Params(strings=["hello", "world"]),
                     id=workflow_id(),
                     task_queue="test",
                 )
