@@ -1,7 +1,7 @@
 import asyncio
 import logging
-import random
 import re
+import uuid
 import sys
 
 import temporalio.client
@@ -27,7 +27,7 @@ async def flip(to_flip: list[str]) -> list[str]:
     handle = await client.start_workflow(
         Flip.run,
         Params(strings=to_flip),
-        id=f"flip-{random.randint(0, 100000)}",
+        id=f"flip-{uuid.uuid4()}",
         task_queue="default",
     )
 
