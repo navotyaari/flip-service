@@ -1,4 +1,5 @@
 import dataclasses
+from typing import cast
 
 import temporalio.workflow
 
@@ -24,7 +25,7 @@ class Flip:
 
     @temporalio.workflow.run
     async def run(self, params: Params) -> Result:
-        results: list[str | None] = [None] * len(params.strings)
+        result_buffer: list[str | None] = [None] * len(params.strings)
         pending: list[tuple[int, str]] = list(enumerate(params.strings))
 
         while pending:
@@ -41,14 +42,14 @@ class Flip:
             still_pending: list[tuple[int, str]] = []
             for (original_index, original_string), flipped in zip(batch, batch_result.strings):
                 if flipped != PARTIAL_FAILURE_SENTINEL:
-                    results[original_index] = flipped
+                    result_buffer[original_index] = flipped
                     self._strings_flipped_count += 1
                 else:
                     still_pending.append((original_index, original_string))
 
             pending = pending[MAX_BATCH_SIZE:] + still_pending
 
-        return Result(strings=results)
+        return Result(strings=cast(list[str], result_buffer))
 
     @temporalio.workflow.query
     def get_strings_flipped_count(self) -> int:
