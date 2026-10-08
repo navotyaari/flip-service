@@ -23,10 +23,7 @@ def make_response(mocker: MockerFixture, status_code: http.HTTPStatus, body: lis
 
 @pytest.fixture
 def mock_post(mocker: MockerFixture):
-    mock_client = mocker.AsyncMock()
-    mock_client.__aenter__.return_value = mock_client
-    mocker.patch("flip_service.activities.httpx.AsyncClient", return_value=mock_client)
-    return mock_client.post
+    return mocker.patch("flip_service.activities._http_client.post")
 
 
 class TestRetryPolicy:
