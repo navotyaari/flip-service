@@ -72,7 +72,7 @@ Expected output:
 
 ```
 Progress: 0 strings flipped, 0 HTTP 200s
-Progress: 2 strings flipped, 2 HTTP 200s
+Progress: 2 strings flipped, 1 HTTP 200s
 olleh dlrow
 ```
 
