@@ -3,8 +3,8 @@ from datetime import timedelta
 
 from temporalio.common import RetryPolicy
 
-TEMPORAL_HOST = os.getenv("TEMPORAL_HOST", "localhost:7233")
-TASK_QUEUE = "default"
+from flip_service.config_shared import TASK_QUEUE, TEMPORAL_HOST
+
 FLIP_SERVER_URL = os.getenv("FLIP_SERVER_URL", "http://127.0.0.1:8000")
 MAX_BATCH_SIZE = 10
 PARTIAL_FAILURE_SENTINEL = "-"
