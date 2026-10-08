@@ -28,6 +28,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 markers = ["integration: full-stack tests using a real embedded Temporal server"]
+asyncio_mode = "strict"
 
 [tool.pylint.messages_control]
 disable = "missing-docstring,too-few-public-methods"
