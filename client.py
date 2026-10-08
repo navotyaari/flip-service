@@ -36,11 +36,11 @@ async def flip(to_flip: list[str]) -> list[str]:
             try:
                 flipped_count = await handle.query(Flip.get_strings_flipped_count)
                 http_200_count = await handle.query(Flip.get_http_200_count)
-                print(f"Progress: {flipped_count} strings flipped, {http_200_count} HTTP 200s")
+                logging.info("Progress: %d strings flipped, %d HTTP 200s", flipped_count, http_200_count)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                logging.warning(f"Progress query failed: {exc}")
+                logging.warning("Progress query failed: %s", exc)
             await asyncio.sleep(QUERY_POLL_INTERVAL)
 
     poll_task = asyncio.create_task(poll_progress())

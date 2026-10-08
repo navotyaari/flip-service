@@ -3,7 +3,6 @@ import logging
 
 import temporalio.client
 import temporalio.worker
-import temporalio.workflow
 
 from flip_service.activities import flip_batch
 from batch_processor.config import TASK_QUEUE, TEMPORAL_HOST
@@ -19,21 +18,16 @@ WORKFLOWS = [Flip]
 async def main():
     setup_logging()
 
-    # Start client
     client = await temporalio.client.Client.connect(TEMPORAL_HOST)
-    if not ACTIVITIES:
-        logging.warning("No activities specified, worker will not be able to execute any non-workflow tasks")
-    # Run a worker for the workflow
     async with temporalio.worker.Worker(
         client,
-        task_queue="default",
+        task_queue=TASK_QUEUE,
         workflows=WORKFLOWS,
         activities=ACTIVITIES,
     ):
-        # Wait until interrupted
-        print("Worker started, ctrl+c to exit")
+        logging.info("Worker started, ctrl+c to exit")
         await interrupt_event.wait()
-        print("Shutting down")
+        logging.info("Shutting down")
 
 
 if __name__ == "__main__":
