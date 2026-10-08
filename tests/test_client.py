@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import pytest
 import temporalio.client
@@ -83,7 +84,7 @@ class TestWorkflowFailure:
 
 class TestOutput:
     @pytest.mark.asyncio
-    async def test_progress_printed_to_stdout(self, mock_temporal_client, capsys):
+    async def test_result_printed_to_stdout(self, mock_temporal_client, capsys):
         await flip(["hello"])
         assert capsys.readouterr().out
 
@@ -93,3 +94,9 @@ class TestOutput:
         output = capsys.readouterr().out
         assert "olleh" in output
         assert "dlrow" in output
+
+    @pytest.mark.asyncio
+    async def test_progress_logged(self, mock_temporal_client, caplog):
+        with caplog.at_level(logging.INFO):
+            await flip(["hello"])
+        assert any("flipped" in record.message for record in caplog.records)

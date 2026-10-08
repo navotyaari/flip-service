@@ -128,7 +128,7 @@ poetry run pytest tests/test_workflow_integration.py
 Define a `SERVICE_CONFIG` instance with your service's specifics:
 
 ```python
-from flip_service.service_config import ServiceConfig
+from batch_processor.service_config import ServiceConfig
 from temporalio.common import RetryPolicy
 from datetime import timedelta
 import http, os

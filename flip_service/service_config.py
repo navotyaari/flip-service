@@ -1,22 +1,10 @@
-import dataclasses
 import http
 import os
 from datetime import timedelta
-from typing import Callable
 
 from temporalio.common import RetryPolicy
 
-
-@dataclasses.dataclass(frozen=True)
-class ServiceConfig:
-    server_url: str
-    endpoint: str
-    is_partial_failure: Callable[[str], bool]
-    retryable_status_codes: frozenset[int]
-    non_retryable_status_codes: frozenset[int]
-    max_batch_size: int
-    start_to_close_timeout: timedelta
-    retry_policy: RetryPolicy
+from batch_processor.service_config import ServiceConfig
 
 
 _FLIP_SERVER_PROCESSING_TIME = timedelta(seconds=5)

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = []
 readme = "README.md"
-packages = [{ include = "flip_service" }]
+packages = [{ include = "flip_service" }, { include = "batch_processor" }]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
