@@ -63,4 +63,8 @@ if __name__ == "__main__":
         logging.error(exc)
         sys.exit(1)
 
-    asyncio.run(flip(sys.argv[1:]))
+    try:
+        asyncio.run(flip(sys.argv[1:]))
+    except temporalio.client.WorkflowFailureError as exc:
+        logging.error(exc)
+        sys.exit(1)
