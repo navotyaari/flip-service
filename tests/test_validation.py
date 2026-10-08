@@ -58,6 +58,10 @@ class TestEmptyInputRejected:
         with pytest.raises(ValueError):
             validate_inputs([])
 
+    def test_empty_string(self):
+        with pytest.raises(ValueError):
+            validate_inputs([""])
+
 
 class TestMixedListRejected:
     def test_one_invalid_string_in_otherwise_valid_list(self):
