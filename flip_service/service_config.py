@@ -18,6 +18,7 @@ SERVICE_CONFIG = ServiceConfig(
     non_retryable_status_codes=frozenset({http.HTTPStatus.BAD_REQUEST}),
     max_batch_size=10,
     start_to_close_timeout=_FLIP_SERVER_PROCESSING_TIME * 6,
+    http_timeout=_FLIP_SERVER_PROCESSING_TIME * 2,
     retry_policy=RetryPolicy(
         maximum_attempts=10,
         initial_interval=timedelta(seconds=1),

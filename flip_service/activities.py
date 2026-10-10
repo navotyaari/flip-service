@@ -7,7 +7,7 @@ import temporalio.activity
 from flip_service.errors import NonRetryableFlipError, RetryableFlipError
 from flip_service.service_config import SERVICE_CONFIG
 
-_http_client = httpx.AsyncClient()
+_http_client = httpx.AsyncClient(timeout=SERVICE_CONFIG.http_timeout.total_seconds())
 
 
 @dataclasses.dataclass

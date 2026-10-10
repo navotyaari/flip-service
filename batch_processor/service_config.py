@@ -14,4 +14,5 @@ class ServiceConfig:
     non_retryable_status_codes: frozenset[int]
     max_batch_size: int
     start_to_close_timeout: timedelta
+    http_timeout: timedelta
     retry_policy: RetryPolicy

@@ -10,7 +10,7 @@ from tests.fixtures.flip_server import controlled_flip_server
 
 @pytest_asyncio.fixture(autouse=True)
 async def reset_http_client(monkeypatch):
-    client = httpx.AsyncClient()
+    client = httpx.AsyncClient(timeout=SERVICE_CONFIG.http_timeout.total_seconds())
     monkeypatch.setattr(_activities_module, "_http_client", client)
     yield
     await client.aclose()
